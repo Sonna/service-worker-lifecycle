@@ -565,6 +565,14 @@ The `doSomeStuff()` should return a promise so it can succeed or fail and be res
 
 This following section looks how one would go about Unit and Integration testing, as well as Workbox a tool built on top of Service Workers.
 
+### Playground project
+
+An toy example project is available at the following repository
+
+- https://github.com/Sonna/service-worker-lifecycle
+
+It was initially based off one of the Lab examples present on Google developers website; i.e. [Lab: Caching Files with Service Worker](https://developers.google.com/web/ilt/pwa/lab-caching-files-with-service-worker).
+
 ### Unit testing a Service Worker
 
 Install your preferred testing tool/package, this README will use [Jest][Jest].
@@ -630,11 +638,61 @@ describe('Service worker', () => {
 ### Integration testing a Service Worker
 
 - TODO
+- See [Cypress issue - Simulate offline mode #235](https://github.com/cypress-io/cypress/issues/235)
+
+However, there are some kown issues with using Cypress when a Service Worker is active, since it intercepts `fetch` requests:
+
+> #### `window.fetch` routing and stubbing
+>
+> [Issue #95](https://github.com/cypress-io/cypress/issues/95)
+>
+> Support for `fetch` has not been added but it’s possible to handle in the same way as we handle `XHRs`. This biggest challenge here is that you can use `fetch` in `Service Workers` outside of the global context. We’ll likely have to move routing to the server and handle it in the proxy layer but it should be possible.
+>
+> While we currently provide things like the stack trace and initiator line for XHR’s we will not be able to provide that for `fetch`.
+>
+> **Workaround**
+>
+> Sit tight, [comment on the issue](https://github.com/cypress-io/cypress/issues/95) so we know you care about this support, and be patient.
+>
+> - https://docs.cypress.io/guides/references/known-issues.html#window-fetch-routing-and-stubbing
+
+A solution might be to clear the cache before running on certain pages; e.g.
+
+```javascript
+beforeAll(() => {
+    // run this once before all code
+    return window.caches.keys().then(cacheNames =>
+        Promise.all(cacheNames.map(cacheName => window.caches.delete(cacheName)))
+    );
+})
+```
+-- https://github.com/cypress-io/cypress/issues/702
+
+Or unregistering them
+
+```javascript
+beforeAll(() => {
+    window.navigator.serviceWorker.getRegistrations()
+        .then(registrations => {
+            registrations.forEach(registration => {
+                registration.unregister()
+                    .then((success) => {
+                        console.log('Service worker unregistration status:', success);
+                    })
+                    .catch((err) => {
+                        console.log('Service worker unregistration failed', err);
+                    });
+            });
+        })
+        .catch((err) => {
+            console.log('Service worker registration not found.');
+        });
+}
+```
 
 ### Workbox
 
 [Workbox](https://workboxjs.org/)
-
 
 ## Other Important Notes
 
