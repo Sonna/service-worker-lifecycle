@@ -693,6 +693,15 @@ beforeAll(() => {
 ### Workbox
 
 [Workbox](https://workboxjs.org/)
+- TODO (write up about it?)
+
+### `importScripts()`
+
+`importScripts()` is totally a thing that forgot to mention anywhere, but is available in a Service Worker to include other external scripts, which is often seen when using the generated Service Worker script provided by Workbox; e.g.
+
+```javascript
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/3.4.1/workbox-sw.js');
+```
 
 ## Other Important Notes
 
