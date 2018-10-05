@@ -23,13 +23,9 @@ self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME, 'root-site-cache-v1'];
 
   const cleanCaches = caches.keys().then(cacheNames =>
-    Promise.all(
-      cacheNames.map(cacheName => {
-        if (cacheWhitelist.indexOf(cacheName) === -1) {
-          return caches.delete(cacheName);
-        }
-      })
-    )
+    cacheNames.filter(cacheName => !cacheWhitelist.includes(cacheName))
+  ).then(cachesToDelete =>
+    Promise.all(cachesToDelete.map(cacheToDelete => caches.delete(cacheToDelete)))
   );
   event.waitUntil(cleanCaches);
 });

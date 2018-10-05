@@ -55,7 +55,7 @@ _Alternatively, `('serviceWorker' in navigator)` or `(navigator.serviceWorker !=
 
 Multiple Service Workers can be ran on the same domain, but only one Service Worker will be active for a given scope. The active and in control Service Worker will be the one with the more specific the scope it is registered from; e.g.
 
-```htmlmixed=
+```htmlmixed
 <script>
    // `serviceworker1.js` & `serviceworker2.js` never both active in same scope
    // - `serviceworker1.js` active on pages under `/myapp`
@@ -72,7 +72,7 @@ Multiple Service Workers can be ran on the same domain, but only one Service Wor
 
 [`scope` can also be passed in as an option when registering a Service Worker](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register#Parameters); e.g.
 
-```htmlmixed=
+```htmlmixed
 <script>
    // - `serviceworker1.js` active on pages under `/` (i.e. the entire site)
    // - `serviceworker2.js` active on pages under `/myapp`, whilst `serviceworker1.js` is no longer active or ran on those pages
@@ -141,7 +141,7 @@ See also:
 
 After registering a Service Worker, work can be handle in its various lifecycle events. The most common work to be done is during the `install` event is to cache files<sup>[\[5\]](https://developers.google.com/web/fundamentals/primers/service-workers/#install_a_service_worker "Install a Service Worker")</sup>; e.g.
 
-```javascript=
+```javascript
 var CACHE_NAME = 'my-site-cache-v1';
 var urlsToCache = [
   '/',
@@ -198,7 +198,7 @@ This document will list the last, since the first two; "cache only" & "network o
 
 #### Cache falling back to network
 
-```typescript=
+```typescript
 // Cache and return requests, otherwise fallback to fetching new requests
 self.addEventListener('fetch', (event: FetchEvent) => {
     const response = caches.match(event.request)
@@ -210,7 +210,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 
 #### Network falling back to Cache
 
-```typescript=
+```typescript
 self.addEventListener('fetch', (event: FetchEvent) => {
     const response = fetch(event.request)
         .catch(() => caches.match(event.request));
@@ -225,7 +225,7 @@ This approach is recommended for resources that update frequently, it first load
 
 **Client code**:
 
-```htmlmixed=
+```htmlmixed
 <script>
     // function updatePage() {} // exists somewhere else
     var networkDataReceived = false;
@@ -260,7 +260,7 @@ This sends a request to website and pulls from cache at the same, with the cache
 
 **Service Worker:**
 
-```javascript=
+```javascript
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.open('mysite-dynamic')
@@ -280,7 +280,7 @@ This Service Worker is similar to the "Cache falling back to network" code, but 
 
 Interestingly because the Cache can be accessed outside the Service Worker within the regular frontend client JavaScript and since the cache had some simple methods to add to the cache; i.e. `cache.add(request)`, `cache.addAll(requests)` & `cache.put(request, response)` <sup>[\[8\]](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker#working_with_data "Working with data")</sup>; requests can added to the cache on User interaction; e.g, "Read Later" or "Save for offline" button.
 
-```htmlmixed=
+```htmlmixed
 <script>
     document.querySelector('.cache-article').addEventListener('click', function(event) {
         event.preventDefault();
@@ -363,7 +363,7 @@ Also,
 
 [As previously mentioned](#Update-Service-Worker), the browser will check for updates automatically, _after navigations and functional events_, but these updates can also be triggered manually:
 
-```htmlmixed=
+```htmlmixed
 <script>
     navigator.serviceWorker.register('/sw.js').then(reg => {
         // sometime later...
@@ -409,7 +409,7 @@ function messageHandler(event) {
 
 Then during the unregistering of Service Workers, call this purge event before unregistering; e.g.
 
-```htmlmixed=
+```htmlmixed
 <script>
     navigator.serviceWorker.getRegistration()
         .then((registration) => {
@@ -448,18 +448,14 @@ self.addEventListener('activate', event => {
 
 Or instead Whitelist Cache names not marked for deletion:
 
-```javascript=
+```javascript
 self.addEventListener('activate', event => {
     const cacheWhitelist = ['pages-cache-v1', 'blog-posts-cache-v1'];
 
     const cleanCaches = caches.keys().then(cacheNames =>
-        Promise.all(
-            cacheNames.map(cacheName => {
-                if (cacheWhitelist.indexOf(cacheName) === -1) {
-                    return caches.delete(cacheName);
-                }
-            })
-        )
+        cacheNames.filter(cacheName => !cacheWhitelist.includes(cacheName))
+    ).then(cachesToDelete =>
+        Promise.all(cachesToDelete.map(cacheToDelete => caches.delete(cacheToDelete)))
     );
     event.waitUntil(cleanCaches);
 });
@@ -511,7 +507,7 @@ function pushHandler(event) { // same as `messageHandler`
 
 Add in the client script:
 
-```htmlmixed=
+```htmlmixed
 <script>
     const PURGE_ALL_CACHES_ACTION = 'purge_all_caches';
 
@@ -533,7 +529,7 @@ Throughout this document there have mentions of Background Sync API, but not exp
 
 In order to use this Background Sync with a Service Worker
 
-```htmlmixed=
+```htmlmixed
 <script>
     const MY_SYNC_NAME = 'myFirstSync';
 
@@ -549,7 +545,7 @@ In order to use this Background Sync with a Service Worker
 
 > Then listen for the event in /sw.js:
 
-```javascript=
+```javascript
 // const doSomeStuff = Promise.new(/* ... */);
 const MY_SYNC_NAME = 'myFirstSync';
 
@@ -571,7 +567,59 @@ This following section looks how one would go about Unit and Integration testing
 
 ### Unit testing a Service Worker
 
-- TODO
+Install your preferred testing tool/package, this README will use [Jest][Jest].
+
+```shell
+$ npm i -D jest
+```
+
+Install [`service-worker-mock`](https://www.npmjs.com/package/service-worker-mock) it will be necessary in order to create a similar environment for our Service Worker script to run in within our tests.
+
+```shell
+$ npm i -D service-worker-mock
+```
+
+Then with those libraries install the following test can be written to begin evaulating our Service Worker.
+
+```javascript
+// ./service-worker.test.js
+const makeServiceWorkerEnv = require('service-worker-mock');
+const makeFetchMock = require('service-worker-mock/fetch');
+
+describe('Service worker', () => {
+  beforeEach(() => {
+    Object.assign(
+      global,
+      makeServiceWorkerEnv(),
+      makeFetchMock(),
+      // If you're using sinon ur similar you'd probably use below instead of makeFetchMock
+      // fetch: sinon.stub().returns(Promise.resolve())
+    );
+    jest.resetModules();
+  });
+  it('should add listeners', () => {
+    require('./service-worker.js');
+    expect(self.listeners['install']).toBeDefined();
+    expect(self.listeners['activate']).toBeDefined();
+    expect(self.listeners['fetch']).toBeDefined();
+  });
+
+  it('should delete old caches on activate', async () => {
+    require('./myapp/serviceworker2.js');
+    await self.trigger('install'); // installs our expected cache
+
+    // Create old cache
+    await self.caches.open('OLD_CACHE');
+    expect(self.snapshot().caches.OLD_CACHE).toBeDefined();
+
+    // Activate and verify old cache is removed
+    await self.trigger('activate');
+    expect(self.snapshot().caches.OLD_CACHE).toBeUndefined();
+    // expect(self.snapshot().caches['precache-v1']).toBeDefined();
+    expect(self.snapshot().caches['myapp-site-cache-v1']).toBeDefined();
+  });
+});
+```
 
 **See also:**
 - https://hackernoon.com/service-worker-testing-made-easy-9a2d8e9aa50
@@ -610,3 +658,4 @@ This following section looks how one would go about Unit and Integration testing
 
 [MDN - Service Worker API]: https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
 [GOING OFFLINE by Jeremy Keith]: https://abookapart.com/products/going-offline
+[Jest]: https://jestjs.io/
