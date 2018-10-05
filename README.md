@@ -13,7 +13,7 @@ A quick rundown on what a Service Worker is:
     - [Background Sync](https://developers.google.com/web/updates/2015/12/background-sync); defers & re-attempts online requests when intermittently offline
     - [Channel Messaging API](https://developer.mozilla.org/en-US/docs/Web/API/Channel_Messaging_API); communication between web workers, service workers & host application
 
-However, despite running in the client's browser the Service Worker will **not** have access to the DOM, the `window`, synchronous [`XHR`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) or [`localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API), since they are fully async <sup>[1](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API#Service_worker_concepts_and_usage)</sup>.
+However, despite running in the client's browser the Service Worker will **not** have access to the DOM, the `window`, synchronous [`XHR`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) or [`localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API), since they are fully async.<sup>[\[1\]](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API#Service_worker_concepts_and_usage "Service worker concepts and usage")</sup>
 
 Also, Service workers only run over HTTPS and be served from the same domain, since they
 > act as proxy servers that sit between web applications, the browser, and the network (when available)
@@ -41,7 +41,7 @@ Unfortunately not all browsers support this and thus its safer to include JavaSc
    </script>
 ```
 
-Its also strongly recommended to check if the browser does support Service Workers `if (navigator.serviceWorker) {}` before attemptting to register one.
+Its also strongly recommended to check if the browser does support Service Workers `if (navigator.serviceWorker) {}` (or `if (window.navigator && navigator.serviceWorker) {}`) before attemptting to register one.
 
 _Alternatively, `('serviceWorker' in navigator)` or `(navigator.serviceWorker !== undefined)` conditional expression can be used instead to check for Service Worker Browser support._
 
@@ -55,7 +55,8 @@ _Alternatively, `('serviceWorker' in navigator)` or `(navigator.serviceWorker !=
 
 Multiple Service Workers can be ran on the same domain, but only one Service Worker will be active for a given scope. The active and in control Service Worker will be the one with the more specific the scope it is registered from; e.g.
 
-```javascript
+```htmlmixed=
+<script>
    // `serviceworker1.js` & `serviceworker2.js` never both active in same scope
    // - `serviceworker1.js` active on pages under `/myapp`
    // - `serviceworker2.js` active on pages under `/myotherapp`
@@ -66,15 +67,18 @@ Multiple Service Workers can be ran on the same domain, but only one Service Wor
    // - `serviceworker2.js` active on pages under `/myapp`, whilst `serviceworker1.js` is no longer active or ran on those pages
    navigator.serviceWorker.register('/serviceworker1.js');
    navigator.serviceWorker.register('/myapp/serviceworker2.js');
+</script>
 ```
 
 [`scope` can also be passed in as an option when registering a Service Worker](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register#Parameters); e.g.
 
-```javascript
+```htmlmixed=
+<script>
    // - `serviceworker1.js` active on pages under `/` (i.e. the entire site)
    // - `serviceworker2.js` active on pages under `/myapp`, whilst `serviceworker1.js` is no longer active or ran on those pages
     navigator.serviceWorker.register('/serviceworker1.js');
     navigator.serviceWorker.register('/serviceworker2.js', { scope: '/myapp/' });
+</script>
 ```
 
 Or in support browsers:
@@ -84,7 +88,7 @@ Or in support browsers:
     <link rel="serviceworker" href="/serviceworker2.js" scope="/myapp/">
 ```
 
-Also "avoid changing the URL of your service worker script" <sup>[2](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#avoid_changing_the_url_of_your_service_worker_script)</sup>, since a previously registered Service Worker at the same scope when trump any newer Serivce Worker that gets registered and potentially cause old cached information to be served on the website.
+Also "avoid changing the URL of your service worker script" <sup>[\[2\]](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#avoid_changing_the_url_of_your_service_worker_script "Avoid changing the url of your service worker script")</sup>, since a previously registered Service Worker at the same scope when trump any newer Serivce Worker that gets registered and potentially cause old cached information to be served on the website.
 
 ### `Promise`
 
@@ -110,15 +114,13 @@ _Notes: Later on this document will describe to hook into Service Worker events;
 
 ### 1. Download 2. Install 3. Wait 4. Activate
 
-On the first visit to page that includes a Service Worker, it will be downloaded, get installed **once**, then will not receive events; like `fetch` & `push`; until finished installing & becomes "active", which by default, will not be until the page has been refreshed and the page requests can intercepted through the Service Worker <sup>[3](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#the_first_service_worker)</sup>.
+On the first visit to page that includes a Service Worker, it will be downloaded, get installed **once**, then will not receive events; like `fetch` & `push`; until finished installing & becomes "active", which by default, will not be until the page has been refreshed and the page requests can intercepted through the Service Worker.<sup>[\[3\]](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#the_first_service_worker "The first Service Worker")</sup>
 
 <!-- ![Simplified version of Service Worker lifecycle, on first install](https://developers.google.com/web/fundamentals/primers/service-workers/images/sw-lifecycle.png) -->
 
 This "waiting" before "active" on initial install can be skipped; by calling `self.skipWaiting()` during the install event; however comes with some implicit cautionary warnings:
 
-> Caution: `skipWaiting()` means that your new service worker is likely controlling pages that were loaded with an older version. This means some of your page's fetches will have been handled by your old service worker, but your new service worker will be handling subsequent fetches. If this might break things, don't use `skipWaiting()`.<sup>[5](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#skip_the_waiting_phase)</sup>
-
-
+> Caution: `skipWaiting()` means that your new service worker is likely controlling pages that were loaded with an older version. This means some of your page's fetches will have been handled by your old service worker, but your new service worker will be handling subsequent fetches. If this might break things, don't use `skipWaiting()`.<sup>[\[4\]](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#skip_the_waiting_phase "Skip the waiting phasee")</sup>
 
 Otherwise, feel free to add the `skipWaiting()` call in the install event, usually before the caching; e.g.
 
@@ -137,7 +139,7 @@ See also:
 
 ### Post Install script -> Begin caching
 
-After registering a Service Worker, work can be handle in its various lifecycle events. The most common work to be done is during the `install` event is to cache files<sup>[4](https://developers.google.com/web/fundamentals/primers/service-workers/#install_a_service_worker)</sup>; e.g.
+After registering a Service Worker, work can be handle in its various lifecycle events. The most common work to be done is during the `install` event is to cache files<sup>[\[5\]](https://developers.google.com/web/fundamentals/primers/service-workers/#install_a_service_worker "Install a Service Worker")</sup>; e.g.
 
 ```javascript=
 var CACHE_NAME = 'my-site-cache-v1';
@@ -175,7 +177,7 @@ Currently available events a Service Worker can listen to:
   > [event type for fetch events](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent) dispatched on the [service worker global scope](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope).
 
 - [`sync`](https://developers.google.com/web/updates/2015/12/background-sync)
-  Background data synchronization, when no tab to the website is open, but Service Worker has woken up (Ideal for: Non-urgent updates; good for timelines/news, but bad for messaging)<sup>[6](https://developers.google.com/web/fundamentals/instant-and-offline/offline-cookbook/#on-background-sync)</sup>
+  Background data synchronization, when no tab to the website is open, but Service Worker has woken up (Ideal for: Non-urgent updates; good for timelines/news, but bad for messaging)<sup>[\[6\]](https://developers.google.com/web/fundamentals/instant-and-offline/offline-cookbook/#on-background-sync "On Background Sync")</sup>
 
 ### Cache and return requests
 
@@ -222,33 +224,35 @@ This approach is recommended for resources that update frequently, it first load
 
 **Client code**:
 
-```javascript=
-// function updatePage() {} // exists somewhere else
-var networkDataReceived = false;
+```htmlmixed=
+<script>
+    // function updatePage() {} // exists somewhere else
+    var networkDataReceived = false;
 
-startSpinner();
+    startSpinner();
 
-// fetch fresh data
-var networkUpdate = fetch('/data.json').then(function(response) {
-  return response.json();
-}).then(function(data) {
-  networkDataReceived = true;
-  updatePage(data);
-});
+    // fetch fresh data
+    var networkUpdate = fetch('/data.json').then(function(response) {
+      return response.json();
+    }).then(function(data) {
+      networkDataReceived = true;
+      updatePage(data);
+    });
 
-// fetch cached data
-caches.match('/data.json').then(function(response) {
-  if (!response) throw Error("No data");
-  return response.json();
-}).then(function(data) {
-  // don't overwrite newer network data
-  if (!networkDataReceived) {
-    updatePage(data);
-  }
-}).catch(function() {
-  // we didn't get cached data, the network is our last hope:
-  return networkUpdate;
-}).catch(showErrorMessage).then(stopSpinner());
+    // fetch cached data
+    caches.match('/data.json').then(function(response) {
+      if (!response) throw Error("No data");
+      return response.json();
+    }).then(function(data) {
+      // don't overwrite newer network data
+      if (!networkDataReceived) {
+        updatePage(data);
+      }
+    }).catch(function() {
+      // we didn't get cached data, the network is our last hope:
+      return networkUpdate;
+    }).catch(showErrorMessage).then(stopSpinner());
+</script>
 ```
 
 This sends a request to website and pulls from cache at the same, with the cache to be likely victor, should the fetch request not return in time. This works by checking if `networkDataReceived` state has been changed before the cache updates the page, but network update will change the page regardless and update the `networkDataReceived` state to inform the cache to not to as well.
@@ -269,51 +273,34 @@ self.addEventListener('fetch', event => {
 });
 ```
 
-This Service Worker is similar to the "Cache falling back to network" code, but clones the `response` so that it does not consume before the Browser can use it as well; effectively creating two response streams, one for the Browser and another for Cache, since a stream can only be consumed once. <sup>[8](https://developers.google.com/web/fundamentals/primers/service-workers/#cache_and_return_requests)</sup>
+This Service Worker is similar to the "Cache falling back to network" code, but clones the `response` so that it does not consume before the Browser can use it as well; effectively creating two response streams, one for the Browser and another for Cache, since a stream can only be consumed once. <sup>[\[7\]](https://developers.google.com/web/fundamentals/primers/service-workers/#cache_and_return_requests "Cache and return Requests")</sup>
 
 ### Caching outside the Service Worker
 
-Interestingly because the Cache can be accessed outside the Service Worker within the regular frontend client JavaScript and since the cache had some simple methods to add to the cache; i.e. `cache.add(request)`, `cache.addAll(requests)` & `cache.put(request, response)` <sup>[7](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker#working_with_data)</sup>; requests can added to the cache on User interaction; e.g, "Read Later" or "Save for offline" button.
+Interestingly because the Cache can be accessed outside the Service Worker within the regular frontend client JavaScript and since the cache had some simple methods to add to the cache; i.e. `cache.add(request)`, `cache.addAll(requests)` & `cache.put(request, response)` <sup>[\[8\]](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker#working_with_data "Working with data")</sup>; requests can added to the cache on User interaction; e.g, "Read Later" or "Save for offline" button.
 
-```javascript=
-document.querySelector('.cache-article').addEventListener('click', function(event) {
-    event.preventDefault();
-    var id = this.dataset.articleId;
+```htmlmixed=
+<script>
+    document.querySelector('.cache-article').addEventListener('click', function(event) {
+        event.preventDefault();
+        var id = this.dataset.articleId;
 
-    caches.open('mysite-article-' + id).then(function(cache) {
-        fetch('/get-article-urls?id=' + id).then(function(response) {
-            // /get-article-urls returns a JSON-encoded array of
-            // resource URLs that a given article depends on
-            return response.json();
-        }).then(function(urls) {
-            cache.addAll(urls);
+        caches.open('mysite-article-' + id).then(function(cache) {
+            fetch('/get-article-urls?id=' + id).then(function(response) {
+                // /get-article-urls returns a JSON-encoded array of
+                // resource URLs that a given article depends on
+                return response.json();
+            }).then(function(urls) {
+                cache.addAll(urls);
+            });
         });
     });
-});
+</script>
 ```
 > In the above example, when the user clicks an element with the `cache-article` class, we are getting the article ID, fetching the article with that ID, and adding the article to the cache.
 > -- [On user interaction](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker#on_user_interaction)
 
 ## Update Service Worker
-
-TODO:
-
-```javascript=
-self.addEventListener('activate', function(event) {
-    const cacheWhitelist = ['pages-cache-v1', 'blog-posts-cache-v1'];
-
-    const cleanCaches = caches.keys().then(cacheNames =>
-        Promise.all(
-            cacheNames.map(cacheName => {
-                if (cacheWhitelist.indexOf(cacheName) === -1) {
-                    return caches.delete(cacheName);
-                }
-            })
-        );
-    });
-    event.waitUntil(cleanCaches);
-});
-```
 
 > In brief:
 >
@@ -336,7 +323,8 @@ Also,
 >
 > So, to enable as many patterns as we can, the whole update cycle is observable:
 >
-> ```javascript
+> ```htmlmixed
+> <script>
 >   navigator.serviceWorker.register('/sw.js').then(reg => {
 >     reg.installing; // the installing worker, or undefined
 >     reg.waiting; // the waiting worker, or undefined
@@ -365,41 +353,41 @@ Also,
 >     // changes, eg a new worker has skipped waiting and become
 >     // the new active worker.
 >   });
+> </script>
 > ```
 >
 > - https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#handling_updates
 
+### Manual updates
 
+[As previously mentioned](#Update-Service-Worker), the browser will check for updates automatically, _after navigations and functional events_, but these updates can also be triggered manually:
 
-> Manual updates
-> As I mentioned earlier, the browser checks for updates automatically after > navigations and functional events, but you can also trigger them manually:
->
-> navigator.serviceWorker.register('/sw.js').then(reg => {
->   // sometime later…
->   reg.update();
-> });
-> If you expect the user to be using your site for a long time without reloading, you may want to call update() on an interval (such as hourly).
->
-> -- https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#manual_updates
+```htmlmixed=
+<script>
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+        // sometime later...
+        reg.update();
+    });
+</script>
+```
 
-## Emergency update/disable Service Worker
+These is useful when an user is expected to be using a site for a long time without reloading, as such calling `update()` on an interval (such as hourly) will help prevent the Service Worker and caches from going stale.<sup>[\[9\]](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#manual_updates "Manual Updates")</sup>
+
 ## Removal / Disable Service Worker
 
 > Programatically Removing a Service Worker
 > ```javascript
->   navigator.serviceWorker.getRegistrations().then(
->     function(registrations) {
->         for(let registration of registrations) {
->             registration.unregister();
->         }
-> });
+>   navigator.serviceWorker.getRegistrations()
+>       .then(function(registrations) {
+>           for(let registration of registrations) {
+>               registration.unregister();
+>           }
+>       });
 > ```
 > - https://love2dev.com/blog/how-to-uninstall-a-service-worker/
 > - https://stackoverflow.com/questions/33704791/how-do-i-uninstall-a-service-worker
 
-This would unregister a Service Worker, however would leave the caches as-is, this removes a bit more code
-
-Based off the suggestions in [StackOverflow - How do I clear service worker caches when unregistering?](https://stackoverflow.com/questions/47358643/how-do-i-clear-service-worker-caches-when-unregistering); e.g. something like the following
+The above code will unregister all Service Workers, however would leave their caches as-is, to remove this as well a bit more code is required as follows:
 
 ```javascript
 self.addEventListener('message', (event) => {
@@ -412,31 +400,30 @@ const CACHE_NAME = 'mycache';
 function messageHandler(event) {
     if (event.data === PURGE_CACHE_ACTION) {
         caches.delete(CACHE_NAME)
-        .then((success) => {
-            console.log("Cache removal status: " + success);
-        })
-        .catch((err) => {
-            console.log("Cache removal error: ", err);
-        });
+            .then((success) => { console.log("Cache removal status: " + success); })
+            .catch((err) => { console.log("Cache removal error: ", err); });
     }
 }
 ```
 
 Then during the unregistering of Service Workers, call this purge event before unregistering; e.g.
 
-```javascript
-navigator.serviceWorker.getRegistration()
-.then((registration) => {
-    registration.active.postMessage(PURGE_CACHE_ACTION); // :point_left:
-    // :point_down: Before this
-    registration.unregister()
-    .then((success) => { console.log('Service worker unregistration status: ' + success); })
-    .catch((err) => { console.log('Service worker unregistration failed', err); });
-})
-.catch((err) => { console.log('Service worker registration not found.'); });
+```htmlmixed=
+<script>
+    navigator.serviceWorker.getRegistration()
+        .then((registration) => {
+            registration.active.postMessage(PURGE_CACHE_ACTION); // :point_left: Add this
+
+            // :point_down: Before this
+            registration.unregister()
+                .then((success) => { console.log('Service worker unregistration status: ' + success); })
+                .catch((err) => { console.log('Service worker unregistration failed', err); });
+        })
+        .catch((err) => { console.log('Service worker registration not found.'); });
+</script>
 ```
 
-[See also this discussion on StackOverflow, about **why** wanting to unregister a Service Worker, when updating an existing Service Worker to one that does nothing might be easier](https://stackoverflow.com/questions/46424367/how-to-unregister-and-remove-old-service-worker)
+_The above code is based off the suggestions made in [StackOverflow - How do I clear service worker caches when unregistering?](https://stackoverflow.com/questions/47358643/how-do-i-clear-service-worker-caches-when-unregistering)_
 
 Alternatively, instead of sending a message to purge the cache, all older caches that do not match the current version could be removed: e.g.
 
@@ -458,12 +445,126 @@ self.addEventListener('activate', event => {
 ```
 -- [Removing outdated caches](https://developers.google.com/web/ilt/pwa/caching-files-with-service-worker#removing_outdated_caches)
 
-Also, all Service Worker code should probably be wrapped in the following condition to ensure that only supported Browsers execute Service Worker code:
+Or instead Whitelist Cache names not marked for deletion:
 
-```js
-if(window.navigator && navigator.serviceWorker) { }
+```javascript=
+self.addEventListener('activate', event => {
+    const cacheWhitelist = ['pages-cache-v1', 'blog-posts-cache-v1'];
+
+    const cleanCaches = caches.keys().then(cacheNames =>
+        Promise.all(
+            cacheNames.map(cacheName => {
+                if (cacheWhitelist.indexOf(cacheName) === -1) {
+                    return caches.delete(cacheName);
+                }
+            })
+        );
+    });
+    event.waitUntil(cleanCaches);
+});
 ```
 
+**See also:**
+- [This discussion on StackOverflow, about **why** wanting to unregister a Service Worker, when updating an existing Service Worker to one that does nothing might be easier](https://stackoverflow.com/questions/46424367/how-to-unregister-and-remove-old-service-worker)
+
+## Emergency update/disable Service Worker
+
+In an emergency a `push` event would be recommended (a background `sync` could be used instead, but would not be immediate and need to be registered ahead of time as well), otherwise an User will not receive the update until they revisit the website and the browser picks up on the byte-code difference between its registered Service Worker and new one loaded onto the server.
+
+So, as long as a Service Worker has permission to listen for push events and a user defined event type & handler have defined; e.g. `'purge_cache'` or `'disable_service_worker'`, etc; is regularly calling `update()` or the browser has detected a change to its registered Service Worker, then it should be possible.
+
+The updated Service Worker to remove everything could be something like the following:
+
+```javascript
+self.addEventListener('message', (event) => {
+    messageHandler(event);
+});
+
+const PURGE_ALL_CACHES_ACTION = 'purge_all_caches';
+
+function purgeAllCaches() {
+    event.waitUntil(
+        caches.keys().then(cacheNames => Promise.all(
+            cacheNames.map(cacheName => caches.delete(cacheName))
+        ))
+    );
+}
+
+function messageHandler(event) {
+    if (event.data === PURGE_ALL_CACHES_ACTION) {
+        purgeAllCaches();
+    }
+}
+
+// If Push notifications available, then the following
+self.addEventListener('push', event => {
+    pushHandler(event);
+});
+
+function pushHandler(event) { // same as `messageHandler`
+    if (event.data === PURGE_ALL_CACHES_ACTION) {
+        purgeAllCaches();
+    }
+}
+```
+
+Add in the client script:
+
+```htmlmixed=
+<script>
+    const PURGE_ALL_CACHES_ACTION = 'purge_all_caches';
+
+    navigator.serviceWorker.getRegistrations()
+       .then(registrations => {
+           registrations.forEach(registration => {
+               registration.active.postMessage(PURGE_ALL_CACHES_ACTION);
+               registration.unregister();
+           })
+       });
+</script>
+```
+
+_With any solution the User will have to be online for it to purge caches; `sync` or `push`; and looking at the website to `unregister()` the Service Worker._
+
+### Background Sync
+
+Throughout this document there have mentions of Background Sync API, but not explained it. Ideally it is used to schedule sending data beyond the life of the page; e.g. Chat messages, emails, document updates, settings changes, photo uploads, etc; generally anything that should reach the server even if the user navigates away or closes the tab. <sup>[\[9\]](https://developers.google.com/web/updates/2015/12/background-sync#what_could_i_use_background_sync_for)</sup> It achieves this by providing an API that allows for actions to be deferred until a stable connection has been resumed, firing off a `sync` event.
+
+In order to use this Background Sync with a Service Worker
+
+```htmlmixed=
+<script>
+    const MY_SYNC_NAME = 'myFirstSync';
+
+    // Register your service worker:
+    navigator.serviceWorker.register('/sw.js');
+
+    // Then later, request a one-off sync:
+    navigator.serviceWorker.ready.then(function(swRegistration) {
+      return swRegistration.sync.register(MY_SYNC_NAME);
+    });
+</script>
+```
+
+> Then listen for the event in /sw.js:
+
+```javascript=
+// const doSomeStuff = Promise.new(/* ... */);
+const MY_SYNC_NAME = 'myFirstSync';
+
+self.addEventListener('sync', event => {
+  if (event.tag === MY_SYNC_NAME) {
+    event.waitUntil(doSomeStuff());
+  }
+});
+```
+
+The `doSomeStuff()` should return a promise so it can succeed or fail and be rescheduled to retry should it fail, until it is successful. All syncs (including retires) will wait for connectivity and employ an exponential back-off.<sup>[\[10\]](https://developers.google.com/web/updates/2015/12/background-sync#how_to_request_a_background_sync)</sup>
+
+> The tag name of the sync (`'myFirstSync'` in the above example) should be unique for a given sync. If you register for a sync using the same tag as a pending sync, it coalesces with the existing sync. That means you can register for an "clear-outbox" sync every time the user sends a message, but if they send 5 messages while offline, you'll only get one sync when they become online. If you want 5 separate sync events, just use unique tags!
+> -- [How to request a background sync](https://developers.google.com/web/updates/2015/12/background-sync#how_to_request_a_background_sync)
+
+s
 ## BONUS!
 
 ### Unit testing a Service Worker
@@ -475,7 +576,7 @@ if(window.navigator && navigator.serviceWorker) { }
 
 ### Integration testing a Service Worker
 
-## Other Notes
+## Other Important Notes
 
 > During activation, other events such as fetch are put into a queue, so a long activation could potentially block page loads. Keep your activation as lean as possible, only use it for things you _couldn't_ do while the old version was active.
 > -- https://developers.google.com/web/fundamentals/instant-and-offline/offline-cookbook/
