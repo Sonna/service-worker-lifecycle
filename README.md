@@ -188,6 +188,7 @@ In order to make the website available offline, it needs to be intercept network
 - cache falling back to network
 - network falling back to cache
 - cache then network
+- _offline page_
 
 This document will list the last, since the first two; "cache only" & "network only"; are unlikely to be used.
 
@@ -458,8 +459,8 @@ self.addEventListener('activate', event => {
                     return caches.delete(cacheName);
                 }
             })
-        );
-    });
+        )
+    );
     event.waitUntil(cleanCaches);
 });
 ```
@@ -564,17 +565,28 @@ The `doSomeStuff()` should return a promise so it can succeed or fail and be res
 > The tag name of the sync (`'myFirstSync'` in the above example) should be unique for a given sync. If you register for a sync using the same tag as a pending sync, it coalesces with the existing sync. That means you can register for an "clear-outbox" sync every time the user sends a message, but if they send 5 messages while offline, you'll only get one sync when they become online. If you want 5 separate sync events, just use unique tags!
 > -- [How to request a background sync](https://developers.google.com/web/updates/2015/12/background-sync#how_to_request_a_background_sync)
 
-s
 ## BONUS!
+
+This following section looks how one would go about Unit and Integration testing, as well as Workbox a tool built on top of Service Workers.
 
 ### Unit testing a Service Worker
 
+- TODO
+
+**See also:**
 - https://hackernoon.com/service-worker-testing-made-easy-9a2d8e9aa50
 - https://www.npmjs.com/package/service-worker-mock
 - https://medium.com/dev-channel/testing-service-workers-318d7b016b19
 - https://stackoverflow.com/questions/44222121/setting-up-jsdom-navigator-serviceworker-for-unit-testing-service-workers
 
 ### Integration testing a Service Worker
+
+- TODO
+
+### Workbox
+
+[Workbox](https://workboxjs.org/)
+
 
 ## Other Important Notes
 
@@ -593,6 +605,8 @@ s
 
 **Future concerns**
 - [How to combine PWA and isomorphic rendering (SSR)?](https://michaljanaszek.com/blog/combine-pwa-and-isomorphic-rendering)
+
+![Example application provided with this Repository](screenshot_2018-10-05_at_3.31.16_pm.png)
 
 [MDN - Service Worker API]: https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
 [GOING OFFLINE by Jeremy Keith]: https://abookapart.com/products/going-offline

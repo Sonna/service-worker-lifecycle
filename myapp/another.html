@@ -1,0 +1,53 @@
+<!--
+Copyright 2016 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Another</title>
+    <link href="../styles/another.css" rel="stylesheet">
+  </head>
+  <body>
+    <h1>Another Page</h1>
+    <button id="remove-service-worker">Active Purge (unregister Service Worker & clear cache)</button>
+    <p>
+      This page is managed by the MY_APP Service Worker, and caches its own static files within a
+      cache called <code>'myapp-site-cache-v1'</code>, which is separate to the ROOT cache.
+    </p>
+    <a href="/">Back</a>
+    <script src="../js/another.js"></script>
+    <script>
+      function removeServiceWorker(event) {
+        event.preventDefault();
+
+        // Apparently, if you get the scope wrong; like `/myapp` & not `/myapp/`; then
+        // the parent or root service worker will get unregistered
+        navigator.serviceWorker.getRegistration('/myapp/')
+          .then(registration => {
+              const PURGE_CACHE_ACTION = 'purge_cache';
+              registration.active.postMessage(PURGE_CACHE_ACTION);
+              registration.unregister()
+                  .then((success) => { console.log('Service worker unregistration status: ' + success); })
+                  .catch((err) => { console.log('Service worker unregistration failed', err); });
+          })
+          .catch((err) => { console.log('Service worker registration not found.'); });
+      }
+
+      document.querySelector('#remove-service-worker').addEventListener('click', removeServiceWorker);
+    </script>
+  </body>
+</html>
