@@ -30,18 +30,15 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     console.log('ROOT Fetching:', event.request.url);
 
-    const response = caches
-        .match(event.request)
-        //   .then(match => match || fetch(event.request));
-        .then(match => {
-            if (match) {
-                console.log('Match found in', CACHE_NAME, 'for:', event.request.url);
-                return match;
-            } else {
-                console.log('No Match in', CACHE_NAME, 'found for:', event.request.url);
-                return fetch(event.request);
-            }
-        });
+    const response = caches.match(event.request).then(match => {
+        if (match) {
+            console.log('Match found in', CACHE_NAME, 'for:', event.request.url);
+            return match;
+        } else {
+            console.log('No Match in', CACHE_NAME, 'found for:', event.request.url);
+            return fetch(event.request);
+        }
+    });
     event.respondWith(response);
 });
 
