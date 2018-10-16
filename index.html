@@ -29,7 +29,15 @@ limitations under the License.
     <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js');
+        navigator.serviceWorker.register('service-worker.js')
+        .then(registration => {
+          console.log('Service worker registered! 😎  with scope:', registration.scope);
+          setInterval(registration.update, 1000 * 60 * 60); // Manually Update hourly
+        })
+        .catch(error => {
+          console.error('😥 Service worker registration failed:', error);
+        });
+
         navigator.serviceWorker.register('/myapp/serviceworker2.js', { scope: '/myapp/' })
         .then(registration => {
           console.log('Service worker registered! 😎  with scope:', registration.scope);
@@ -39,23 +47,6 @@ limitations under the License.
           console.error('😥 Service worker registration failed:', error);
         });
 
-
-        // Activate this to unregister ROOT Service Workers:
-        //
-        // _Scope required to uninstall other workers_
-        // // navigator.serviceWorker.getRegistration('/myapp/')
-        //
-        // navigator.serviceWorker.getRegistrations()
-        //  .then(registrations => {
-        //    registrations.forEach(registration => {
-        //      const PURGE_CACHE_ACTION = 'purge_cache';
-        //      registration.active.postMessage(PURGE_CACHE_ACTION);
-        //      registration.unregister()
-        //          .then((success) => { console.log('Service worker unregistration status: ' + success); })
-        //          .catch((err) => { console.log('Service worker unregistration failed', err); });
-        //    });
-        //  })
-        //  .catch((err) => { console.log('Service worker registration not found.'); });
       });
     }
     </script>

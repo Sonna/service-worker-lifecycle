@@ -1,21 +1,21 @@
 {
-  "name": "service-worker-lifecycle-example",
-  "version": "1.0.0",
-  "description": "Demonstrates some core functionality of Service Workers",
-  "main": "server.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "jest",
-    "start": "node server.js",
-    "watch-test": "jest --watch"
-  },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "express": "^4.16.3",
-    "jest": "^23.6.0",
-    "service-worker-mock": "^1.9.3"
-  }
+    "name": "service-worker-lifecycle-example",
+    "version": "1.0.0",
+    "description": "Demonstrates some core functionality of Service Workers",
+    "main": "server.js",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "test": "jest",
+        "start": "node server.js",
+        "watch-test": "jest --watch"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "express": "^4.16.3",
+        "jest": "^23.6.0",
+        "service-worker-mock": "^1.9.3"
+    }
 }
