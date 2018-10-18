@@ -47,6 +47,7 @@ self.addEventListener('message', event => {
 });
 
 const PURGE_CACHE_ACTION = 'purge_cache';
+const FAKE_PUSH_NOTIFICATION_ACTION = 'data-notification';
 
 function messageHandler(event) {
     if (event.data === PURGE_CACHE_ACTION) {
@@ -58,5 +59,9 @@ function messageHandler(event) {
             .catch(err => {
                 console.log(CACHE_NAME, 'Cache removal error:', err);
             });
+    }
+    if (event.data.tag === FAKE_PUSH_NOTIFICATION_ACTION) {
+        const { title, ...options } = event.data;
+        registration.showNotification(title, options);
     }
 }
