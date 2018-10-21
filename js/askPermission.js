@@ -12,5 +12,12 @@ function askPermission() {
         if (permissionResult !== 'granted') {
             throw new Error("We weren't granted permission.");
         }
+        if (
+            !navigator.serviceWorker
+                .register('/service-worker.js')
+                .then(reg => reg.showNotification)
+        ) {
+            throw new Error('Service Worker does not support `showNotification()` API');
+        }
     });
 }
